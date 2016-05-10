@@ -16,6 +16,7 @@ var storage = {
 };
 
 var requestHandler = function(request, response) {
+  // console.log(request);
   // Request and Response come from node's http module.
   //
   // They include information about both the incoming request, such as
@@ -78,7 +79,6 @@ var requestHandler = function(request, response) {
       response.writeHead(404, headers);
       response.end();
     }
-  
   }
 
   //POST REQUESTS ONLY
@@ -87,20 +87,20 @@ var requestHandler = function(request, response) {
     if (request.url === '/classes/messages') {
     // console.log('Dealing with POST');
       response.writeHead(201, headers);
-      var body = [];
+      var body = '';
       request.on('error', function(err) {
         console.error(err);
-      }).on('data', function(chunk) {
-        body.push(chunk);
-      }).on('end', function() {
+      });
 
-        body = Buffer.concat(body).toString();
-        body = JSON.parse(body);
-        storage.results.push(body);
+      request.on('data', function(chunk) {
+        console.log('Chunk: ', chunk);
+        body += chunk;
+      });
 
-        response.on('error', function(err) {
-          console.error(err);
-        });
+      request.on('end', function() {
+
+        storage.results.push(JSON.parse(body));
+
 
         // .writeHead() writes to the request line and headers of the response,
         // which includes the status and all headers.
@@ -119,7 +119,6 @@ var requestHandler = function(request, response) {
       response.writeHead(404, headers);
       response.end();
     }
-
     
       // Calling .end "flushes" the response's internal buffer, forcing
       // node to actually send all the data over to the client.
@@ -130,6 +129,7 @@ var requestHandler = function(request, response) {
       // up in the browser.
   }
   //------------------------------------------------------------------------------------------------
+  // console.log('Our response comes to here: ', response);
 };
 
 module.exports = requestHandler;
