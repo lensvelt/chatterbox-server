@@ -84,7 +84,7 @@ var requestHandler = function(request, response) {
   //POST REQUESTS ONLY
   //------------------------------------------------------------------------------------------------
   if (request.method === 'POST' && request.url === '/classes/messages') {
-    
+    var body = [];
     request.on('error', function(err) {
       console.error(err);
     }).on('data', function(chunk) {
