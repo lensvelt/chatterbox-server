@@ -57,8 +57,11 @@ var requestHandler = function(request, response) {
   var headers = defaultCorsHeaders;
 
   //Set the content-type to that per the request else default to plain text  
-  var requestHeaders = request.headers['Content-Type'] || 'text/plain'; //Not being sent in request object
-  headers['Content-Type'] = requestHeaders;
+  if (!request.headers) {
+    headers['Content-Type'] = 'text/plain';
+  } else {
+    headers['Content-Type'] = request.headers['Content-Type'];
+  }
 
   //GET REQUESTS ONLY
   //------------------------------------------------------------------------------------------------
@@ -70,11 +73,11 @@ var requestHandler = function(request, response) {
       });
 
       response.writeHead(200, headers);
-      response.write(JSON.stringify(storage));
+      response.end(JSON.stringify(storage));
     } else {
       response.writeHead(404, headers);
+      response.end();
     }
-    response.end();
   
   }
 
@@ -109,11 +112,12 @@ var requestHandler = function(request, response) {
           body: body
         };
 
-        response.write(JSON.stringify(responseBody));
+        response.end(JSON.stringify(responseBody));
 
       });
     } else {
       response.writeHead(404, headers);
+      response.end();
     }
 
     
@@ -124,7 +128,6 @@ var requestHandler = function(request, response) {
       // anything back to the client until you do. The string you pass to
       // response.end() will be the body of the response - i.e. what shows
       // up in the browser.
-    response.end();
   }
   //------------------------------------------------------------------------------------------------
 };
