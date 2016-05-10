@@ -38,7 +38,6 @@ var requestHandler = function(request, response) {
   //------------------------------------------------------------------------------------------------
   var method = request.method;
   var url = request.url;
-  var statusCode = 200;
   // See the note below about CORS headers.
   // These headers will allow Cross-Origin Resource Sharing (CORS).
   // This code allows this server to talk to websites that
@@ -63,50 +62,61 @@ var requestHandler = function(request, response) {
 
   //GET REQUESTS ONLY
   //------------------------------------------------------------------------------------------------
-  if (request.method === 'GET' && request.url === '/classes/messages') {
+  if (request.method === 'GET') {
     //console.log('Dealing with GET');
-    request.on('error', function(err) {
-      console.error(err);
-    });
+    if (request.url === '/classes/messages') {
+      request.on('error', function(err) {
+        console.error(err);
+      });
 
-    response.writeHead(statusCode, headers);
-    response.write(JSON.stringify(storage));
+      response.writeHead(200, headers);
+      response.write(JSON.stringify(storage));
+    } else {
+      response.writeHead(404, headers);
+    }
     response.end();
   
   }
 
   //POST REQUESTS ONLY
   //------------------------------------------------------------------------------------------------
-  if (request.method === 'POST' && request.url === '/classes/messages') {
-    console.log('Dealing with POST');
-    var body = [];
-    request.on('error', function(err) {
-      console.error(err);
-    }).on('data', function(chunk) {
-      body.push(chunk);
-    }).on('end', function() {
-
-      body = Buffer.concat(body).toString();
-      body = JSON.parse(body);
-      storage.results.push(body);
-
-      response.on('error', function(err) {
+  if (request.method === 'POST') {
+    if (request.url === '/classes/messages') {
+    // console.log('Dealing with POST');
+      response.writeHead(201, headers);
+      var body = [];
+      request.on('error', function(err) {
         console.error(err);
+      }).on('data', function(chunk) {
+        body.push(chunk);
+      }).on('end', function() {
+
+        body = Buffer.concat(body).toString();
+        body = JSON.parse(body);
+        storage.results.push(body);
+
+        response.on('error', function(err) {
+          console.error(err);
+        });
+
+        // .writeHead() writes to the request line and headers of the response,
+        // which includes the status and all headers.
+
+        var responseBody = {
+          headers: headers,
+          method: method,
+          url: url,
+          body: body
+        };
+
+        response.write(JSON.stringify(responseBody));
+
       });
+    } else {
+      response.writeHead(404, headers);
+    }
 
-      // .writeHead() writes to the request line and headers of the response,
-      // which includes the status and all headers.
-      response.writeHead(statusCode, {'Content-Type': requestHeaders});
-
-      var responseBody = {
-        headers: headers,
-        method: method,
-        url: url,
-        body: body
-      };
-
-      response.write(JSON.stringify(responseBody));
-
+    
       // Calling .end "flushes" the response's internal buffer, forcing
       // node to actually send all the data over to the client.
       // 
@@ -114,9 +124,7 @@ var requestHandler = function(request, response) {
       // anything back to the client until you do. The string you pass to
       // response.end() will be the body of the response - i.e. what shows
       // up in the browser.
-      response.end();
-
-    });
+    response.end();
   }
   //------------------------------------------------------------------------------------------------
 };
