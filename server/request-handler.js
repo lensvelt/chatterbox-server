@@ -11,6 +11,9 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+var storage = {
+  results: []
+};
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -28,6 +31,8 @@ var requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
+  // console.log('Request:', request);
+  // console.log('response:', response);
 
   //ALL REQUESTS
   //------------------------------------------------------------------------------------------------
@@ -53,47 +58,37 @@ var requestHandler = function(request, response) {
   var headers = defaultCorsHeaders;
 
   //Set the content-type to that per the request else default to plain text  
-  var requestHeaders = request.headers || 'text/plain'; //Not being sent in request object
+  var requestHeaders = request.headers['Content-Type'] || 'text/plain'; //Not being sent in request object
   headers['Content-Type'] = requestHeaders;
 
   //GET REQUESTS ONLY
   //------------------------------------------------------------------------------------------------
   if (request.method === 'GET' && request.url === '/classes/messages') {
-    
+    //console.log('Dealing with GET');
     request.on('error', function(err) {
       console.error(err);
-    }).on('end', function() {
-
-      response.on('error', function(err) {
-        console.error(err);
-      });
-
-      response.writeHead(statusCode, {'Content-Type': requestHeaders});
-
-      var responseBody = {
-        headers: headers,
-        method: method,
-        url: url,
-      };
-
-      response.write(JSON.stringify(responseBody));
-      response.end();
     });
+
+    response.writeHead(statusCode, headers);
+    response.write(JSON.stringify(storage));
+    response.end();
+  
   }
 
   //POST REQUESTS ONLY
   //------------------------------------------------------------------------------------------------
   if (request.method === 'POST' && request.url === '/classes/messages') {
+    console.log('Dealing with POST');
     var body = [];
     request.on('error', function(err) {
       console.error(err);
     }).on('data', function(chunk) {
       body.push(chunk);
     }).on('end', function() {
-      console.log(body);
+
       body = Buffer.concat(body).toString();
-      console.log(body);
       body = JSON.parse(body);
+      storage.results.push(body);
 
       response.on('error', function(err) {
         console.error(err);
@@ -127,3 +122,7 @@ var requestHandler = function(request, response) {
 };
 
 module.exports = requestHandler;
+
+
+
+
